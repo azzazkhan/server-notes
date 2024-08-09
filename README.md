@@ -54,11 +54,36 @@
     apt-get install -y acl build-essential bsdmainutils cron curl fail2ban \
         g++ gcc git gnupg jq libmagickwand-dev libmcrypt4 libpcre2-dev \
         libpcre3-dev libpng-dev make ncdu net-tools pkg-config python3 \
-        python3-pip rsyslog sendmail sqlite3 tar supervisor ufw unzip \
-        uuid-runtime wget whois zip zsh
+        python3-pip rsyslog sqlite3 tar supervisor ufw unzip uuid-runtime \
+        wget zip zsh
     ```
 
-7. Update SSH config to disallow password login and root user remote access and restart SSH.
+7. Update hostname (if necessary), replace `%HOSTNAME%` with your own hostname.
+
+    ```bash
+    echo "%HOSTNAME%" > /etc/hostname
+    sed -i 's/127\.0\.0\.1.*localhost/127.0.0.1    %HOSTNAME%.localdomain %HOSTNAME% localhost/' /etc/hosts
+    hostname %HOSTNAME%
+    ```
+
+8. Change system's timezone to UTC.
+
+    ```bash
+    ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+    ```
+
+9. Generate a new local SSH key and add source control provider's resolved IPs to known hosts.
+
+    ```bash
+    ssh-keygen -f /home/ubuntu/.ssh/id_ed25519 -t ed25519 -N '' \
+        && ssh-keyscan -H github.com >> /home/ubuntu/.ssh/known_hosts \
+        && ssh-keyscan -H bitbucket.org >> /home/ubuntu/.ssh/known_hosts \
+        && ssh-keyscan -H gitlab.com >> /home/ubuntu/.ssh/known_hosts \
+        && chmod 400 /home/ubuntu/.ssh/id_ed25519* \
+        && chown 400 /home/ubuntu/.ssh/id_ed25519*
+    ```
+
+10. Update SSH config to disallow password login and root user remote access and restart SSH.
 
     ```bash
     mkdir -p /etc/ssh/sshd_config.d \
@@ -70,24 +95,6 @@
        && echo "" >> /etc/ssh/sshd_config.d/50-custom.conf
 
     ssh-keygen -A && service ssh restart
-    ```
-
-8. Update hostname (if necessary), replace `%HOSTNAME%` with your own hostname.
-
-    ```bash
-    echo "%HOSTNAME%" > /etc/hostname
-    sed -i 's/127\.0\.0\.1.*localhost/127.0.0.1    %HOSTNAME%.localdomain %HOSTNAME% localhost/' /etc/hosts
-    hostname %HOSTNAME%
-    ```
-
-9. Change system's timezone to UTC `ln -sf /usr/share/zoneinfo/UTC /etc/localtime`
-10. Generate a new local SSH key and add source control provider's resolved IPs to known hosts.
-
-    ```bash
-    ssh-keygen -f /home/ubuntu/.ssh/id_ed25519 -t ed25519 -N '' \
-        && ssh-keyscan -H github.com >> /home/ubuntu/.ssh/known_hosts \
-        && ssh-keyscan -H bitbucket.org >> /home/ubuntu/.ssh/known_hosts \
-        && ssh-keyscan -H gitlab.com >> /home/ubuntu/.ssh/known_hosts
     ```
 
 11. Configure global Git configurations.
@@ -264,8 +271,7 @@
 31. Enable supervisor.
 
     ```bash
-    systemctl enable supervisor.service
-    service supervisor start
+    systemctl enable supervisor.service && service supervisor start
     ```
 
 32. Disable symlink protection (exposes to symlink attacks).
@@ -308,7 +314,7 @@
 Following the is the base configuration for NGINX (`/etc/nginx/nginx.conf`).
 
 ```nginx
-user ubuntu;
+user www-data;
 worker_processes auto;
 worker_rlimit_nofile 1000; # Increase for Laravel Reverb
 pid /run/nginx.pid;
@@ -441,6 +447,19 @@ http {
     add_header X-Content-Type-Options "nosniff";
     ```
 
+## NGINX Default configuration
+
+This configurations deny connections from unmapped hosts. Place it in `sites-available/default`
+
+```nginx
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    return 403;
+}
+```
+
 ## NGINX Site configuration
 
 ```nginx
@@ -498,13 +517,14 @@ server {
     # Use only with PHP-FPM (comment when using Laravel Octane)
     location ~ index\.php$ {
         fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        # fastcgi_pass unix:/var/run/php/php8.3-fpm-example.com.sock;
+        # fastcgi_pass unix:/var/run/php/php8.3-fpm-example.sock;
         fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
         fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $request_filename;
         include fastcgi_params;
     }
 
-    # Uncomment when using
+    # Uncomment when using Laravel Octane
     # location @octane {
     #     set $suffix "";
     #
