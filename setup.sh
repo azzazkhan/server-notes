@@ -141,10 +141,10 @@ apt_wait
 
 apt_wait
 apt-get install -y acl build-essential bsdmainutils cron curl fail2ban g++ \
-    gcc git gnupg jq libmagickwand-dev libmcrypt4 libpcre2-dev \
-    libpcre3-dev libpng-dev make ncdu net-tools pkg-config python3 \
-    python3-pip rsyslog sqlite3 tar supervisor ufw unzip uuid-runtime wget \
-    whois zip zsh
+    gcc git gnupg jq libffi-dev libmagickwand-dev libmcrypt4 libpcre2-dev \
+    libssl-dev libpcre3-dev libpng-dev make ncdu net-tools pkg-config python3 \
+    python3-dev python3-venv python3-pip rsyslog sqlite3 tar supervisor ufw \
+    unzip uuid-runtime wget whois zip zsh
 
 MKPASSWD_INSTALLED=$(type mkpasswd &> /dev/null)
 if [ $? -ne 0 ]; then
@@ -169,7 +169,7 @@ ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
 # Set the hostname if necessary
 
-# CUSTOM_HOSTNAME="hostname"
+# CUSTOM_HOSTNAME="my-server"
 
 # echo $CUSTOM_HOSTNAME > /etc/hostname
 # sed -i "s/127\.0\.0\.1.*localhost/127.0.0.1	$CUSTOM_HOSTNAME.localdomain $CUSTOM_HOSTNAME localhost/" /etc/hosts
@@ -591,9 +591,9 @@ if [[ ! -z $PHP ]]; then
 fi
 
 # Add custom user to www-data group
-usermod -a -G www-data forge
-id forge
-groups forge
+usermod -a -G www-data ubuntu
+id ubuntu
+groups ubuntu
 
 # TODO: Setup logrotate for NGINX
 
@@ -659,7 +659,7 @@ systemctl daemon-reload
 
 # Fix incorrect logrotate default configuration
 
-# sed -i -r "s/^create 0640 www-data adm/create 0640 forge adm/" /etc/logrotate.d/nginx
+# sed -i -r "s/^create 0640 www-data adm/create 0640 ubuntu adm/" /etc/logrotate.d/nginx
 
 # Final setup
 
