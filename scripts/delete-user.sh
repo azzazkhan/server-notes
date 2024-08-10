@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+
 export DEBIAN_FRONTEND=noninteractive
 
 NEW_USER="$1"

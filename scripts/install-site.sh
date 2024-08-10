@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+
 SITE_NAME="$1"
 REPO_NAME="$2"
 RELEASE=$(date "+%Y%m%d%H%M%S")

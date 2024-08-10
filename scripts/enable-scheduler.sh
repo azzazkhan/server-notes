@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+
 SITE_NAME="$1"
 SITE_DIR="/home/$USER/$SITE_NAME"
 

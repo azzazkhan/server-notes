@@ -1,0 +1,33 @@
+#!/usr/bin/bash
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root."
+
+   exit 1
+fi
+
+mkdir -p /root/scripts
+
+SCRIPT_BASE_URL="https://raw.githubusercontent.com/azzazkhan/server-notes/master/scripts"
+
+# Only executable by root user
+
+curl -sL $SCRIPT_BASE_URL/change-hostname.sh -o /root/scripts/change-hostname.sh
+curl -sL $SCRIPT_BASE_URL/create-user.sh -o /root/scripts/create-user.sh
+curl -sL $SCRIPT_BASE_URL/delete-user.sh -o /root/scripts/delete-user.sh
+
+chmod 755 -R /root/scripts
+
+# Global scripts, can be executed by any user
+
+curl -sL $SCRIPT_BASE_URL/install-site.sh -o /usr/local/bin/install-site
+curl -sL $SCRIPT_BASE_URL/update-site.sh -o /usr/local/bin/update-site
+curl -sL $SCRIPT_BASE_URL/enable-scheduler.sh -o /usr/local/bin/enable-scheduler
+curl -sL $SCRIPT_BASE_URL/disable-scheduler.sh -o /usr/local/bin/disable-scheduler
+
+chmod 755 /usr/local/bin/install-site
+chmod 755 /usr/local/bin/update-site
+chmod 755 /usr/local/bin/enable-scheduler
+chmod 755 /usr/local/bin/disable-scheduler
