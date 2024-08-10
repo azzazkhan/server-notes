@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+
 export DEBIAN_FRONTEND=noninteractive
 
 if [[ $EUID -ne 0 ]]; then
@@ -154,6 +156,10 @@ if [ $? -ne 0 ]; then
 fi
 
 apt_wait
+
+# Run cron on system boot
+
+systemctl enable cron
 
 # Install Python Httpie
 
@@ -675,6 +681,10 @@ systemctl daemon-reload
 # Fix incorrect logrotate default configuration
 
 # sed -i -r "s/^create 0640 www-data adm/create 0640 ubuntu adm/" /etc/logrotate.d/nginx
+
+# Download helper scripts
+
+curl -s https://raw.githubusercontent.com/azzazkhan/server-notes/master/scripts/download | bash
 
 # Final setup
 
