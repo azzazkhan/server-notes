@@ -30,13 +30,9 @@ fi
 #
 #
 
-mkdir -p $SITE_DIR/releases
-touch $SITE_DIR/database.sqlite
-
 git clone git@github.com:$REPO_NAME.git $SITE_DIR/releases/$RELEASE
 
-mv $SITE_DIR/releases/$RELEASE/storage      $SITE_DIR/storage
-cp $SITE_DIR/releases/$RELEASE/.env.example $SITE_DIR/.env
+rm $SITE_DIR/releases/$RELEASE/storage
 
 ln -s $SITE_DIR/database.sqlite $SITE_DIR/releases/$RELEASE/database/database.sqlite
 ln -s $SITE_DIR/.env            $SITE_DIR/releases/$RELEASE/.env
@@ -46,13 +42,20 @@ cd $SITE_DIR/releases/$RELEASE
 
 composer install --prefer-dist --optimize-autoloader --no-interaction
 
-php $SITE_DIR/releases/$RELEASE/artisan key:generate --ansi
 
-yarn install --non-interactive
-yarn run build
+# yarn install --non-interactive
+# yarn run build
 
-php $SITE_DIR/releases/$RELEASE/artisan migrate --force
+php artisan optimize
+# php artisan icon:cache
+php artisan storage:link --force
+
+php artisan migrate --force --isolated
 
 ln -s $SITE_DIR/releases/$RELEASE $SITE_DIR/current
 
-# TODO: Add NGINX site configuration
+# php artisan queue:restart
+# php artisan pulse:restart
+# php artisan horizon:terminate
+
+sudo service php8.3-fpm reload
