@@ -33,19 +33,15 @@ touch /home/$NEW_USER/.ssh/authorized_keys
 
 ssh-keygen -f /home/$NEW_USER/.ssh/id_ed25519 -t ed25519 -N ''
 
+# Replace `root` with proper username in generated SSH key
+
+sed -i "s/root@$HOSTNAME/$NEW_USER@$HOSTNAME/" /home/$NEW_USER/.ssh/id_ed25519.pub
+
 # Copy source control pulic keys into known hosts file
 
 ssh-keyscan -H github.com >> /home/$NEW_USER/.ssh/known_hosts
 ssh-keyscan -H bitbucket.org >> /home/$NEW_USER/.ssh/known_hosts
 ssh-keyscan -H gitlab.com >> /home/$NEW_USER/.ssh/known_hosts
-
-# Setup home directory permissions
-
-chown -R $NEW_USER:$NEW_USER /home/$NEW_USER
-chmod -R 755 /home/$NEW_USER
-chmod 400 /home/$NEW_USER/.ssh/id_ed25519
-chmod 400 /home/$NEW_USER/.ssh/id_ed25519.pub
-chmod 600 /home/$NEW_USER/.ssh/authorized_keys
 
 # Allow FPM restart
 
@@ -228,6 +224,9 @@ EOF
 
 chown -R $NEW_USER:$NEW_USER /home/$NEW_USER
 chmod -R 755 /home/$NEW_USER
+chmod 400 /home/$NEW_USER/.ssh/id_ed25519
+chmod 400 /home/$NEW_USER/.ssh/id_ed25519.pub
+chmod 600 /home/$NEW_USER/.ssh/authorized_keys
 
 # Create new PHP FPM pool
 
@@ -250,6 +249,3 @@ sed -i "s/^request_terminate_timeout .*/request_terminate_timeout = 60/" $POOL_F
 # Restart PHP FPM to create new listening socket
 
 service php8.3-fpm restart
-
-# Remove user, home and PHP FPM pool
-# deluser laravel && rm -rf /home/laravel && rm /etc/php/8.3/fpm/pool.d/www-laravel.conf

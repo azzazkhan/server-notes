@@ -179,6 +179,10 @@ ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
 ssh-keygen -f /home/ubuntu/.ssh/id_ed25519 -t ed25519 -N ''
 
+# Replace `root` with proper username in generated SSH key
+
+sed -i "s/root@$HOSTNAME/ubuntu@$HOSTNAME/" /home/ubuntu/.ssh/id_ed25519.pub
+
 # Copy source control pulic keys into known hosts file
 
 ssh-keyscan -H github.com >> /home/ubuntu/.ssh/known_hosts
@@ -340,7 +344,7 @@ apt_wait
 
 systemctl enable nginx.service
 
-# Generate a secure DH Param for NGINX (will take some time) 
+# Generate a secure DH Param for NGINX (will take some time)
 
 openssl dhparam -out /etc/nginx/dhparams.pem 4096
 
@@ -550,13 +554,13 @@ rm /etc/nginx/sites-available/default
 cat > /etc/nginx/sites-available/000-catch-all << EOF
 server {
     http2 on;
-    
+
     listen 80 default_server;
     listen [::]:80 default_server;
 
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
-    
+
     server_name _;
 
     ssl_certificate /etc/nginx/ssl/catch-all.invalid.crt;
