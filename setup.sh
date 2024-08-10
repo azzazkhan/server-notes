@@ -297,6 +297,7 @@ sed -i "s/max_execution_time = .*/max_execution_time = 30/" /etc/php/8.3/fpm/php
 sed -i "s/post_max_size = .*/post_max_size = 10M/" /etc/php/8.3/fpm/php.ini
 sed -i "s/upload_max_filesize = .*/upload_max_filesize = 10M/" /etc/php/8.3/fpm/php.ini
 sed -i "s/max_file_uploads = .*/max_file_uploads = 20/" /etc/php/8.3/fpm/php.ini
+sed -i "s/opcache.validate_timestamps = .*/opcache.validate_timestamps = 0/" /etc/php/8.3/fpm/php.ini
 
 # PHP FPM configurations (enable OPcache and configure parameters)
 sed -i "s/;opcache.enable=1/opcache.enable=1/" /etc/php/8.3/fpm/php.ini
