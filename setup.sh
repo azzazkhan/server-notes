@@ -193,6 +193,10 @@ chmod 400 /home/ubuntu/.ssh/id_ed25519
 chmod 400 /home/ubuntu/.ssh/id_ed25519.pub
 chmod 600 /home/ubuntu/.ssh/authorized_keys
 
+# Add new group for isolated users
+
+addgroup isolated
+
 # Disable password authentication and root access over SSH
 
 if [ ! -d /etc/ssh/sshd_config.d ]; then mkdir /etc/ssh/sshd_config.d; fi

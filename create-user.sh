@@ -1,3 +1,5 @@
+export DEBIAN_FRONTEND=noninteractive
+
 NEW_USER="$1"
 
 if [[ $EUID -ne 0 ]]; then
@@ -17,6 +19,7 @@ fi
 useradd $NEW_USER
 mkdir -p /home/$NEW_USER/.ssh
 adduser $NEW_USER www-data
+adduser $NEW_USER isolated
 passwd -d $NEW_USER
 
 # Setup Bash shell
