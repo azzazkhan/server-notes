@@ -27,7 +27,10 @@ passwd -d $NEW_USER
 chsh -s /bin/bash $NEW_USER
 touch /home/$NEW_USER/.profile
 touch /home/$NEW_USER/.bashrc
-touch /home/$NEW_USER/.ssh/authorized_keys
+
+# Copy default user SSH access keys
+
+cp /home/ubuntu/.ssh/authorized_keys /home/$NEW_USER/.ssh/authorized_keys
 
 # Add default user to new user group (to be able to access PHP FPM socket)
 
