@@ -29,6 +29,10 @@ touch /home/$NEW_USER/.profile
 touch /home/$NEW_USER/.bashrc
 touch /home/$NEW_USER/.ssh/authorized_keys
 
+# Add default user to new user group (to be able to access PHP FPM socket)
+
+adduser ubuntu $NEW_USER
+
 # Generate a new SSH key
 
 ssh-keygen -f /home/$NEW_USER/.ssh/id_ed25519 -t ed25519 -N ''

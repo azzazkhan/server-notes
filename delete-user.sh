@@ -20,6 +20,10 @@ echo "Stopping PHP FPM ..."
 
 service php8.3-fpm stop
 
+# Remove default user from new user group
+
+deluser ubuntu $NEW_USER
+
 # Delete user and home directory
 deluser $NEW_USER
 rm -rf /home/$NEW_USER
