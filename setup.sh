@@ -448,7 +448,7 @@ EOF
 
 rm /etc/nginx/nginx.conf
 cat > /etc/nginx/nginx.conf << EOF
-user www-data;
+user ubuntu;
 worker_processes auto;
 worker_rlimit_nofile 1000; # Increase for Laravel Reverb
 pid /run/nginx.pid;
@@ -599,9 +599,15 @@ if [[ ! -z $PHP ]]; then
 fi
 
 # Add custom user to www-data group
+
 usermod -a -G www-data ubuntu
 id ubuntu
 groups ubuntu
+
+# Change ownership and permissions for NGINX default web root
+
+chown -R www-data:www-data /var/www
+chmod 755 -R /var/www
 
 # TODO: Setup logrotate for NGINX
 
