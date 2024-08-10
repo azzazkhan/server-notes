@@ -256,3 +256,7 @@ sed -i "s/^request_terminate_timeout .*/request_terminate_timeout = 60/" $POOL_F
 # Restart PHP FPM to create new listening socket
 
 service php8.3-fpm restart
+
+# TODO: Add logrotate for schedule logs
+# TODO: Add logrotate for queue worker
+# TODO: Add logrotate for supervised processes
