@@ -593,3 +593,9 @@ server {
 #     }
 # }
 ```
+
+### Standalone Script
+
+```bash
+curl -s https://raw.githubusercontent.com/azzazkhan/server-notes/master/scripts/setup.sh | bash
+```
