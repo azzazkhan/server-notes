@@ -142,11 +142,11 @@ add-apt-repository universe -y
 apt_wait
 
 apt_wait
-apt-get install -y acl build-essential bsdmainutils cron curl fail2ban g++ \
-    gcc git gnupg jq libffi-dev libmagickwand-dev libmcrypt4 libpcre2-dev \
-    libssl-dev libpcre3-dev libpng-dev make ncdu net-tools pkg-config python3 \
-    python3-dev python3-venv python3-pip rsyslog sqlite3 tar supervisor ufw \
-    unzip uuid-runtime wget whois zip zsh
+apt-get install -y acl apache2-utils build-essential bsdmainutils cron curl \
+    fail2ban g++ gcc git gnupg jq libffi-dev libmagickwand-dev libmcrypt4 \
+    libpcre2-dev libssl-dev libpcre3-dev libpng-dev make ncdu net-tools \
+    pkg-config python3 python3-dev python3-venv python3-pip pwgen rsyslog \
+    sqlite3 supervisor tar ufw unzip uuid-runtime wget whois zip zsh
 
 MKPASSWD_INSTALLED=$(type mkpasswd &> /dev/null)
 if [ $? -ne 0 ]; then
@@ -648,7 +648,171 @@ echo "ubuntu        soft  nofile  10000" >> /etc/security/limits.conf
 echo "ubuntu        hard  nofile  10000" >> /etc/security/limits.conf
 echo "" >> /etc/security/limits.conf
 
-# TODO: Install MySQL
+
+# Add MySQL keys
+
+apt_wait
+
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 467B942D3A79BD29
+
+apt-get update
+
+apt_wait
+
+
+# Generate
+
+mkdir -p /root/.credentials
+
+# Generate a secure random password
+
+MYSQL_PASSWD=$(pwgen -cnsBv 20 1)
+
+# Install MySQL
+
+apt-get install -y mysql-server
+
+apt_wait
+
+# Start the MySQL service
+
+service mysql start
+
+# Start MySQL service on system boot
+
+systemctl enable mysql
+
+# Disable password expiration
+
+echo "default_password_lifetime = 0" >> /etc/mysql/mysql.conf.d/mysqld.cnf
+
+# Set password as default authentication plugin
+
+echo "" >> /etc/mysql/my.cnf
+echo "[mysqld]" >> /etc/mysql/my.cnf
+echo "default_authentication_plugin=mysql_native_password" >> /etc/mysql/my.cnf
+echo "skip-log-bin" >> /etc/mysql/my.cnf
+
+# Configure max connections based on available RAM
+
+RAM=$(awk '/^MemTotal:/{printf "%3.0f", $2 / (1024 * 1024)}' /proc/meminfo)
+MAX_CONNECTIONS=$(( 70 * $RAM ))
+REAL_MAX_CONNECTIONS=$(( MAX_CONNECTIONS>70 ? MAX_CONNECTIONS : 100 ))
+sed -i "s/^max_connections.*=.*/max_connections=${REAL_MAX_CONNECTIONS}/" /etc/mysql/my.cnf
+sed -i "s/^max_connections.*=.*/max_connections=${REAL_MAX_CONNECTIONS}/" /etc/mysql/mysql.conf.d/mysqld.cnf
+
+if grep -q "bind-address" /etc/mysql/mysql.conf.d/mysqld.cnf; then
+  sed -i '/^bind-address/s/bind-address.*=.*/bind-address = */' /etc/mysql/mysql.conf.d/mysqld.cnf
+else
+  echo "bind-address = *" >> /etc/mysql/mysql.conf.d/mysqld.cnf
+fi
+
+service mysql restart
+
+# Manually apply `mysql_secure_installation`
+
+# Change password of the root user
+mysql --user="root" --password="" -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY '$MYSQL_PASSWD';"
+
+# Remove anonymous user
+mysql --user="root" --password="$MYSQL_PASSWD" -e "DELETE FROM mysql.user WHERE User='';"
+
+# Disable remote root user access
+mysql --user="root" --password="$MYSQL_PASSWD" -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
+
+# Remove test
+mysql --user="root" --password="$MYSQL_PASSWD" -e "DROP DATABASE IF EXISTS test;"
+mysql --user="root" --password="$MYSQL_PASSWD" -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';"
+
+mysql --user="root" --password="$MYSQL_PASSWD" -e "FLUSH PRIVILEGES;"
+
+# Save MySQL password
+
+echo "$MYSQL_PASSWD" > /root/.credentials/mysql
+
+# Create a local super user
+
+mysql --user="root" --password="$MYSQL_PASSWD" -e "CREATE USER 'admin'@'localhost' IDENTIFIED WITH caching_sha2_password BY '$MYSQL_PASSWD';"
+mysql --user="root" --password="$MYSQL_PASSWD" -e "GRANT ALL PRIVILEGES ON *.* TO 'admin'@'localhost' WITH GRANT OPTION;"
+
+# Generate a secure password for phpMyAdmin
+
+PMA_PASSWD=$(pwgen -cnsBv 20 1)
+
+# Create database and user for phpMyAdmin
+
+mysql --user="root" --password="$MYSQL_PASSWD" -e "CREATE DATABASE pma CHARACTER SET utf8 COLLATE utf8_unicode_ci;"
+mysql --user="root" --password="$MYSQL_PASSWD" -e "CREATE USER 'pma'@'localhost' IDENTIFIED WITH caching_sha2_password BY '$PMA_PASSWD';"
+mysql --user="root" --password="$MYSQL_PASSWD" -e "GRANT ALL PRIVILEGES ON pma.* TO 'pma'@'localhost' WITH GRANT OPTION;"
+
+# Refresh privileges to immediately update permissions
+
+mysql --user="root" --password="$MYSQL_PASSWD" -e "FLUSH PRIVILEGES;"
+
+# Save PhpMyAdmin password
+
+echo "$PMA_PASSWD" > /root/.credentials/phpmyadmin
+
+# Download and install PhpMyAdmin
+
+# rm -rf /var/www/phpmyadmin
+# curl -sLO https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.tar.gz
+# mkdir -p /var/www/phpmyadmin
+# tar xvf phpMyAdmin-latest-all-languages.tar.gz --strip-components=1 -C /var/www/phpmyadmin
+# mkdir /var/www/phpmyadmin/tmp
+# rm phpMyAdmin-latest-all-languages.tar.gz
+
+# Remove test directories
+
+# rm -rf /var/www/phpmyadmin/setup
+# rm -rf /var/www/phpmyadmin/test
+
+# Configure phpMyAdmin
+
+# cp /var/www/phpmyadmin/config.sample.inc.php /var/www/phpmyadmin/config.inc.php
+
+# BLOWFISH_SECRET=$(pwgen -cnsBv 33 1)
+
+# sed -i "s/^\$cfg\['blowfish_secret'\].*=.*/\$cfg\['blowfish_secret'\] = '$BLOWFISH_SECRET';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\$cfg\['Servers'\]\[\$i\]\['host'\] = .*/\$cfg\['Servers'\]\[\$i\]\['host'\] = 'localhost';/" /var/www/phpmyadmin/config.inc.php
+
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['controluser'\] = .*/\$cfg\['Servers'\]\[\$i\]\['controluser'\] = 'pma';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['controlpass'\] = .*/\$cfg\['Servers'\]\[\$i\]\['controlpass'\] = '$PMA_PASSWD';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['pmadb'\] = .*/\$cfg\['Servers'\]\[\$i\]\['pmadb'\] = 'pma';/" /var/www/phpmyadmin/config.inc.php
+
+# Uncomment required configuration
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['bookmarktable'\] = .*/\$cfg\['Servers'\]\[\$i\]\['bookmarktable'\] = 'pma__bookmark';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['relation'\] = .*/\$cfg\['Servers'\]\[\$i\]\['relation'\] = 'pma__relation';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['table_info'\] = .*/\$cfg\['Servers'\]\[\$i\]\['table_info'\] = 'pma__table_info';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['table_coords'\] = .*/\$cfg\['Servers'\]\[\$i\]\['table_coords'\] = 'pma__table_coords';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['pdf_pages'\] = .*/\$cfg\['Servers'\]\[\$i\]\['pdf_pages'\] = 'pma__pdf_pages';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['column_info'\] = .*/\$cfg\['Servers'\]\[\$i\]\['column_info'\] = 'pma__column_info';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['history'\] = .*/\$cfg\['Servers'\]\[\$i\]\['history'\] = 'pma__history';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['table_uiprefs'\] = .*/\$cfg\['Servers'\]\[\$i\]\['table_uiprefs'\] = 'pma__table_uiprefs';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['tracking'\] = .*/\$cfg\['Servers'\]\[\$i\]\['tracking'\] = 'pma__tracking';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['userconfig'\] = .*/\$cfg\['Servers'\]\[\$i\]\['userconfig'\] = 'pma__userconfig';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['recent'\] = .*/\$cfg\['Servers'\]\[\$i\]\['recent'\] = 'pma__recent';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['favorite'\] = .*/\$cfg\['Servers'\]\[\$i\]\['favorite'\] = 'pma__favorite';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['users'\] = .*/\$cfg\['Servers'\]\[\$i\]\['users'\] = 'pma__users';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['usergroups'\] = .*/\$cfg\['Servers'\]\[\$i\]\['usergroups'\] = 'pma__usergroups';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['navigationhiding'\] = .*/\$cfg\['Servers'\]\[\$i\]\['navigationhiding'\] = 'pma__navigationhiding';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['savedsearches'\] = .*/\$cfg\['Servers'\]\[\$i\]\['savedsearches'\] = 'pma__savedsearches';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['central_columns'\] = .*/\$cfg\['Servers'\]\[\$i\]\['central_columns'\] = 'pma__central_columns';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['designer_settings'\] = .*/\$cfg\['Servers'\]\[\$i\]\['designer_settings'\] = 'pma__designer_settings';/" /var/www/phpmyadmin/config.inc.php
+# sed -i "s/^\/\/ \$cfg\['Servers'\]\[\$i\]\['export_templates'\] = .*/\$cfg\['Servers'\]\[\$i\]\['export_templates'\] = 'pma__export_templates';/" /var/www/phpmyadmin/config.inc.php
+
+# echo "" >> /var/www/phpmyadmin/config.inc.php
+# echo "\$cfg['Servers'][\$i]['AllowRoot'] = false;" >> /var/www/phpmyadmin/config.inc.php
+
+# Set default user as owner of the PhpMyAdmin
+
+# chown -R ubuntu:ubuntu /var/www/phpmyadmin
+
+# Secure credentials files
+
+chmod 600 -R /root/.credentials
+
+# TODO: Password protected PhpMyAdmin directory
 
 # TODO: Configure logrotate for MySQL
 
