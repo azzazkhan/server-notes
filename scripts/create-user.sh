@@ -244,16 +244,14 @@ POOL_FILE="/etc/php/8.3/fpm/pool.d/www-$NEW_USER.conf"
 cp /etc/php/8.3/fpm/pool.d/www.conf $POOL_FILE
 
 sed -i "s/^\[www\]/\[$NEW_USER\]/" $POOL_FILE
-sed -i "s/^user = www-data/user = $NEW_USER/" $POOL_FILE
-sed -i "s/^group = www-data/group = $NEW_USER/" $POOL_FILE
-sed -i "s/^;listen = .*/listen = \/run\/php\/php8.3-fpm-$NEW_USER.sock/" $POOL_FILE
-sed -i "s/^;listen\.owner.*/listen.owner = $NEW_USER/" $POOL_FILE
-sed -i "s/^;listen\.group.*/listen.group = $NEW_USER/" $POOL_FILE
+sed -i "s/^user = .*/user = $NEW_USER/" $POOL_FILE
+sed -i "s/^group = .*/group = $NEW_USER/" $POOL_FILE
 sed -i "s/^listen = .*/listen = \/run\/php\/php8.3-fpm-$NEW_USER.sock/" $POOL_FILE
 sed -i "s/^listen\.owner.*/listen.owner = $NEW_USER/" $POOL_FILE
 sed -i "s/^listen\.group.*/listen.group = $NEW_USER/" $POOL_FILE
-sed -i "s/^listen\.mode.*/listen.mode = 0666/" $POOL_FILE
-sed -i "s/^request_terminate_timeout .*/request_terminate_timeout = 60/" $POOL_FILE
+sed -i "s/^listen = .*/listen = \/run\/php\/php8.3-fpm-$NEW_USER.sock/" $POOL_FILE
+sed -i "s/^listen\.owner.*/listen.owner = $NEW_USER/" $POOL_FILE
+sed -i "s/^listen\.group.*/listen.group = $NEW_USER/" $POOL_FILE
 
 # Restart PHP FPM to create new listening socket
 

@@ -315,8 +315,8 @@ sed -i "s/;opcache.save_comments=.*/opcache.save_comments=1/" /etc/php/8.3/fpm/p
 
 # PHP FPM pool configuration (user/group, listen mode, request timeout)
 
-sed -i "s/^user = www-data/user = ubuntu/" /etc/php/8.3/fpm/pool.d/www.conf
-sed -i "s/^group = www-data/group = ubuntu/" /etc/php/8.3/fpm/pool.d/www.conf
+sed -i "s/^user = .*/user = ubuntu/" /etc/php/8.3/fpm/pool.d/www.conf
+sed -i "s/^group = .*/group = ubuntu/" /etc/php/8.3/fpm/pool.d/www.conf
 sed -i "s/;listen\.owner.*/listen.owner = ubuntu/" /etc/php/8.3/fpm/pool.d/www.conf
 sed -i "s/;listen\.group.*/listen.group = ubuntu/" /etc/php/8.3/fpm/pool.d/www.conf
 sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.3/fpm/pool.d/www.conf
