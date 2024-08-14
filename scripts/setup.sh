@@ -214,7 +214,6 @@ if [ ! -d /etc/ssh/sshd_config.d ]; then mkdir /etc/ssh/sshd_config.d; fi
 cat << EOF > /etc/ssh/sshd_config.d/50-custom.conf
 # This is a custom file
 
-PermitRootLogin no
 PubkeyAuthentication yes
 PasswordAuthentication no
 
