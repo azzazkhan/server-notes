@@ -32,6 +32,18 @@ fi
 #
 #
 
+if [[ -d $SITE_DIR ]]; then
+    read -p "Site directory ${$SITE_NAME} already exists. Overwrite? [y/N] " answer
+
+    if [ "$answer" = "y" -o "$answer" = "Y" ]
+    then
+        rm -rf $SITE_DIR
+    else
+        exit 1
+    fi
+fi
+
+rm -rf $SITE_DIR
 mkdir -p $SITE_DIR/releases
 touch $SITE_DIR/database.sqlite
 
