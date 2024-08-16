@@ -34,7 +34,7 @@ fi
 
 git clone git@github.com:$REPO_NAME.git $SITE_DIR/releases/$RELEASE
 
-rm $SITE_DIR/releases/$RELEASE/storage
+rm -rf $SITE_DIR/releases/$RELEASE/storage
 
 ln -s $SITE_DIR/database.sqlite $SITE_DIR/releases/$RELEASE/database/database.sqlite
 ln -s $SITE_DIR/.env            $SITE_DIR/releases/$RELEASE/.env
@@ -44,20 +44,18 @@ cd $SITE_DIR/releases/$RELEASE
 
 composer install --prefer-dist --optimize-autoloader --no-interaction
 
+DEPLOY_SCRIPT="$SITE_DIR/releases/$RELEASE/deploy.sh"
 
-# yarn install --non-interactive
-# yarn run build
+if [[ -f $DEPLOY_SCRIPT ]]; then
+    echo "Deploy script found, executing..."
 
-php artisan optimize
-# php artisan icon:cache
-php artisan storage:link --force
-
-php artisan migrate --force --isolated
+    bash $DEPLOY_SCRIPT
+else
+    php artisan optimize
+    php artisan storage:link --force
+    php artisan migrate --force
+fi
 
 ln -s $SITE_DIR/releases/$RELEASE $SITE_DIR/current
-
-# php artisan queue:restart
-# php artisan pulse:restart
-# php artisan horizon:terminate
 
 sudo service php8.3-fpm reload

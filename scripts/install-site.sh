@@ -50,11 +50,22 @@ composer install --prefer-dist --optimize-autoloader --no-interaction
 
 php $SITE_DIR/releases/$RELEASE/artisan key:generate --ansi
 
-yarn install --non-interactive
-yarn run build
+DEPLOY_SCRIPT="$SITE_DIR/releases/$RELEASE/deploy.sh"
 
-php $SITE_DIR/releases/$RELEASE/artisan migrate --force
+php artisan migrate
+
+if [[ -f $DEPLOY_SCRIPT ]]; then
+    echo "Deploy script found, executing..."
+
+    bash $DEPLOY_SCRIPT
+else
+    php artisan optimize
+    php artisan storage:link --force
+    php artisan migrate --force
+fi
 
 ln -s $SITE_DIR/releases/$RELEASE $SITE_DIR/current
+
+sudo service php8.3-fpm reload
 
 # TODO: Add NGINX site configuration
