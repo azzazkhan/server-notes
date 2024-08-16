@@ -56,6 +56,6 @@ else
     php artisan migrate --force
 fi
 
-ln -s $SITE_DIR/releases/$RELEASE $SITE_DIR/current
+ln -snf $SITE_DIR/releases/$RELEASE $SITE_DIR/current
 
 sudo service php8.3-fpm reload
