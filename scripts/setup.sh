@@ -41,25 +41,25 @@ chmod 600 /root/.ssh/authorized_keys
 
 # Setup custom user
 
-useradd ubuntu
-mkdir -p /home/ubuntu/.ssh
-adduser ubuntu sudo
-passwd -d ubuntu
+useradd deployer
+mkdir -p /home/deployer/.ssh
+adduser deployer sudo
+passwd -d deployer
 
 
 # Setup Bash for custom user
 
-chsh -s /bin/bash ubuntu
-cp /root/.profile /home/ubuntu/.profile
-cp /root/.bashrc /home/ubuntu/.bashrc
+chsh -s /bin/bash deployer
+cp /root/.profile /home/deployer/.profile
+cp /root/.bashrc /home/deployer/.bashrc
 
 # Setup SSH access for custom user
 
-cp /root/.ssh/authorized_keys /home/ubuntu/.ssh/authorized_keys
+cp /root/.ssh/authorized_keys /home/deployer/.ssh/authorized_keys
 
-chown -R ubuntu:ubuntu /home/ubuntu
-chmod -R 755 /home/ubuntu
-chmod 600 /home/ubuntu/.ssh/authorized_keys
+chown -R deployer:deployer /home/deployer
+chmod -R 755 /home/deployer
+chmod 600 /home/deployer/.ssh/authorized_keys
 
 apt_wait () {
     # Run fuser on multiple files once, so that it
@@ -183,25 +183,25 @@ ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
 # Create SSH key for custom user
 
-ssh-keygen -f /home/ubuntu/.ssh/id_ed25519 -t ed25519 -N ''
+ssh-keygen -f /home/deployer/.ssh/id_ed25519 -t ed25519 -N ''
 
 # Replace `root` with proper username in generated SSH key
 
-sed -i "s/root@$HOSTNAME/ubuntu@$HOSTNAME/" /home/ubuntu/.ssh/id_ed25519.pub
+sed -i "s/root@$HOSTNAME/deployer@$HOSTNAME/" /home/deployer/.ssh/id_ed25519.pub
 
 # Copy source control pulic keys into known hosts file
 
-ssh-keyscan -H github.com >> /home/ubuntu/.ssh/known_hosts
-ssh-keyscan -H bitbucket.org >> /home/ubuntu/.ssh/known_hosts
-ssh-keyscan -H gitlab.com >> /home/ubuntu/.ssh/known_hosts
+ssh-keyscan -H github.com >> /home/deployer/.ssh/known_hosts
+ssh-keyscan -H bitbucket.org >> /home/deployer/.ssh/known_hosts
+ssh-keyscan -H gitlab.com >> /home/deployer/.ssh/known_hosts
 
 # Setup custom user home directory permissions
 
-chown -R ubuntu:ubuntu /home/ubuntu
-chmod -R 755 /home/ubuntu
-chmod 400 /home/ubuntu/.ssh/id_ed25519
-chmod 400 /home/ubuntu/.ssh/id_ed25519.pub
-chmod 600 /home/ubuntu/.ssh/authorized_keys
+chown -R deployer:deployer /home/deployer
+chmod -R 755 /home/deployer
+chmod 400 /home/deployer/.ssh/id_ed25519
+chmod 400 /home/deployer/.ssh/id_ed25519.pub
+chmod 600 /home/deployer/.ssh/authorized_keys
 
 # Add new group for isolated users
 
@@ -239,26 +239,26 @@ ufw --force enable
 
 # Allow FPM restart
 
-echo "ubuntu ALL=NOPASSWD: /usr/sbin/service php8.3-fpm reload" > /etc/sudoers.d/php-fpm
-echo "ubuntu ALL=NOPASSWD: /usr/sbin/service php8.2-fpm reload" >> /etc/sudoers.d/php-fpm
-echo "ubuntu ALL=NOPASSWD: /usr/sbin/service php8.1-fpm reload" >> /etc/sudoers.d/php-fpm
-echo "ubuntu ALL=NOPASSWD: /usr/sbin/service php8.0-fpm reload" >> /etc/sudoers.d/php-fpm
+echo "deployer ALL=NOPASSWD: /usr/sbin/service php8.3-fpm reload" > /etc/sudoers.d/php-fpm
+echo "deployer ALL=NOPASSWD: /usr/sbin/service php8.2-fpm reload" >> /etc/sudoers.d/php-fpm
+echo "deployer ALL=NOPASSWD: /usr/sbin/service php8.1-fpm reload" >> /etc/sudoers.d/php-fpm
+echo "deployer ALL=NOPASSWD: /usr/sbin/service php8.0-fpm reload" >> /etc/sudoers.d/php-fpm
 
 # Allow NGINX reload
 
-echo "ubuntu ALL=NOPASSWD: /usr/sbin/service nginx *" >> /etc/sudoers.d/nginx
+echo "deployer ALL=NOPASSWD: /usr/sbin/service nginx *" >> /etc/sudoers.d/nginx
 
 # Allow supervisor reload
 
-echo "ubuntu ALL=NOPASSWD: /usr/bin/supervisorctl reload" >> /etc/sudoers.d/supervisor
-echo "ubuntu ALL=NOPASSWD: /usr/bin/supervisorctl reread" >> /etc/sudoers.d/supervisor
-echo "ubuntu ALL=NOPASSWD: /usr/bin/supervisorctl restart *" >> /etc/sudoers.d/supervisor
-echo "ubuntu ALL=NOPASSWD: /usr/bin/supervisorctl start *" >> /etc/sudoers.d/supervisor
-echo "ubuntu ALL=NOPASSWD: /usr/bin/supervisorctl status *" >> /etc/sudoers.d/supervisor
-echo "ubuntu ALL=NOPASSWD: /usr/bin/supervisorctl status" >> /etc/sudoers.d/supervisor
-echo "ubuntu ALL=NOPASSWD: /usr/bin/supervisorctl stop *" >> /etc/sudoers.d/supervisor
-echo "ubuntu ALL=NOPASSWD: /usr/bin/supervisorctl update *" >> /etc/sudoers.d/supervisor
-echo "ubuntu ALL=NOPASSWD: /usr/bin/supervisorctl update" >> /etc/sudoers.d/supervisor
+echo "deployer ALL=NOPASSWD: /usr/bin/supervisorctl reload" >> /etc/sudoers.d/supervisor
+echo "deployer ALL=NOPASSWD: /usr/bin/supervisorctl reread" >> /etc/sudoers.d/supervisor
+echo "deployer ALL=NOPASSWD: /usr/bin/supervisorctl restart *" >> /etc/sudoers.d/supervisor
+echo "deployer ALL=NOPASSWD: /usr/bin/supervisorctl start *" >> /etc/sudoers.d/supervisor
+echo "deployer ALL=NOPASSWD: /usr/bin/supervisorctl status *" >> /etc/sudoers.d/supervisor
+echo "deployer ALL=NOPASSWD: /usr/bin/supervisorctl status" >> /etc/sudoers.d/supervisor
+echo "deployer ALL=NOPASSWD: /usr/bin/supervisorctl stop *" >> /etc/sudoers.d/supervisor
+echo "deployer ALL=NOPASSWD: /usr/bin/supervisorctl update *" >> /etc/sudoers.d/supervisor
+echo "deployer ALL=NOPASSWD: /usr/bin/supervisorctl update" >> /etc/sudoers.d/supervisor
 
 # Install required PHP extensions and packages
 
@@ -280,7 +280,7 @@ curl -sLS https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ --f
 
 # Allow composer execution
 
-echo "ubuntu ALL=(root) NOPASSWD: /usr/local/bin/composer self-update*" > /etc/sudoers.d/composer
+echo "deployer ALL=(root) NOPASSWD: /usr/local/bin/composer self-update*" > /etc/sudoers.d/composer
 
 # PHP CLI configurations (error reporting, memory limit, timezone)
 
@@ -314,10 +314,12 @@ sed -i "s/;opcache.save_comments=.*/opcache.save_comments=1/" /etc/php/8.3/fpm/p
 
 # PHP FPM pool configuration (user/group, listen mode, request timeout)
 
-sed -i "s/^user = .*/user = ubuntu/" /etc/php/8.3/fpm/pool.d/www.conf
-sed -i "s/^group = .*/group = ubuntu/" /etc/php/8.3/fpm/pool.d/www.conf
-sed -i "s/;listen\.owner.*/listen.owner = ubuntu/" /etc/php/8.3/fpm/pool.d/www.conf
-sed -i "s/;listen\.group.*/listen.group = ubuntu/" /etc/php/8.3/fpm/pool.d/www.conf
+sed -i "s/^user = .*/user = deployer/" /etc/php/8.3/fpm/pool.d/www.conf
+sed -i "s/^group = .*/group = deployer/" /etc/php/8.3/fpm/pool.d/www.conf
+sed -i "s/;listen\.owner.*/listen.owner = deployer/" /etc/php/8.3/fpm/pool.d/www.conf
+sed -i "s/;listen\.group.*/listen.group = deployer/" /etc/php/8.3/fpm/pool.d/www.conf
+sed -i "s/listen\.owner.*/listen.owner = deployer/" /etc/php/8.3/fpm/pool.d/www.conf
+sed -i "s/listen\.group.*/listen.group = deployer/" /etc/php/8.3/fpm/pool.d/www.conf
 sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/8.3/fpm/pool.d/www.conf
 sed -i "s/;request_terminate_timeout .*/request_terminate_timeout = 60/" /etc/php/8.3/fpm/pool.d/www.conf
 
@@ -338,7 +340,7 @@ update-alternatives --set php /usr/bin/php8.3
 
 LINE="ALL=NOPASSWD: /usr/sbin/service php8.3-fpm reload"
 FILE="/etc/sudoers.d/php-fpm"
-grep -q -- "^ubuntu $LINE" "$FILE" || echo "ubuntu $LINE" >> "$FILE"
+grep -q -- "^deployer $LINE" "$FILE" || echo "deployer $LINE" >> "$FILE"
 
 # TODO: Configure logrotate for PHP FPM
 
@@ -454,7 +456,7 @@ EOF
 
 rm /etc/nginx/nginx.conf
 cat > /etc/nginx/nginx.conf << EOF
-user ubuntu;
+user deployer;
 worker_processes auto;
 worker_rlimit_nofile 1000; # Increase for Laravel Reverb
 pid /run/nginx.pid;
@@ -606,13 +608,13 @@ fi
 
 # Add custom user to www-data group
 
-usermod -a -G www-data ubuntu
-id ubuntu
-groups ubuntu
+usermod -a -G www-data deployer
+id deployer
+groups deployer
 
 # Change ownership and permissions for NGINX default web root
 
-chown -R ubuntu:ubuntu /var/www
+chown -R deployer:deployer /var/www
 chmod 755 -R /var/www
 
 # TODO: Setup logrotate for NGINX
@@ -643,8 +645,8 @@ npm install -g bun
 # Configure max open file limit for custom user
 
 echo "" >> /etc/security/limits.conf
-echo "ubuntu        soft  nofile  10000" >> /etc/security/limits.conf
-echo "ubuntu        hard  nofile  10000" >> /etc/security/limits.conf
+echo "deployer        soft  nofile  10000" >> /etc/security/limits.conf
+echo "deployer        hard  nofile  10000" >> /etc/security/limits.conf
 echo "" >> /etc/security/limits.conf
 
 
@@ -805,7 +807,7 @@ echo "$PMA_PASSWD" > /root/.credentials/phpmyadmin
 
 # Set default user as owner of the PhpMyAdmin
 
-# chown -R ubuntu:ubuntu /var/www/phpmyadmin
+# chown -R deployer:deployer /var/www/phpmyadmin
 
 # Secure credentials files
 
@@ -843,7 +845,7 @@ systemctl daemon-reload
 
 # Fix incorrect logrotate default configuration
 
-# sed -i -r "s/^create 0640 www-data adm/create 0640 ubuntu adm/" /etc/logrotate.d/nginx
+# sed -i -r "s/^create 0640 www-data adm/create 0640 deployer adm/" /etc/logrotate.d/nginx
 
 # Download helper scripts
 
